@@ -1,0 +1,37 @@
+version: "3"
+services:
+  fluentd:
+    container_name: fluentd
+    user: root
+    build:
+      context: .
+    image: fluent/fluentd:v1.15-debian-arm64-1
+    volumes:
+    - ./file:/fluentd/log/files/ #Example: Reading logs from a file
+    - ./configurations:/fluentd/etc/
+    - ./logs:/output/ # Example: Fluentd will collect logs and store it here for demo
+    logging:
+      driver: "local"
+  elasticsearch: # port 9200
+    image: elasticsearch:8.4.3
+    container_name: elasticsearch
+    ports:
+      - 9200:9200
+    environment:
+    - node.name=elasticsearch
+    - xpack.security.enabled=false
+    - cluster.initial_master_nodes=elasticsearch
+    - bootstrap.memory_lock=true
+    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+  kibana:
+    image: kibana:8.4.3
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
